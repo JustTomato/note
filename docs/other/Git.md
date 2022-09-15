@@ -1,5 +1,3 @@
-### Git
-
 官网下载太慢，我们可以使用淘宝镜像下载：http://npm.taobao.org/mirrors/git-for-windows/
 
 安装：无脑下一步即可！安装完毕就可以使用了！
@@ -72,7 +70,7 @@ configgit config --system --list　
 git config --global  --list
 ```
 
-**Git相关的配置文件：**
+##### Git相关的配置文件：
 
 1）、Git\etc\gitconfig  ：Git 安装目录下的 gitconfig   --system 系统级
 
@@ -270,7 +268,7 @@ To https://github.com/JustTomato/note.git
 Art3mis@Art3mis MINGW64 ~/Desktop/11 (main)
 ```
 
-## 12.GIT分支
+#### 10.GIT分支
 
 分支在GIT中相对较难，分支就是科幻电影里面的平行宇宙，如果两个平行宇宙互不干扰，那对现在的你也没啥影响。不过，在某个时间点，两个平行宇宙合并了，我们就需要处理一些问题了！
 

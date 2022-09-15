@@ -1339,6 +1339,8 @@ console.log(Buffer.from('珠').toString('base64'))//54+g
 > 在服务器中我们是可以操作二进制的，前端也是可以操作二进制。
 >
 > 另外Buffer类型是可以和字符串随便转化 
+>
+> JS中是ArrayBuffer，Node中是Buffer
 
 1.buffer的声明方式
 
@@ -2077,7 +2079,7 @@ a()
 
 各个节点数据通过指针的方法串联起来,构成链表。（单向指针）
 
-![16](C:/Users/87631/Desktop/workSpace/架构/blog/docs/node/img/16.png)
+![16](img/16.png)
 
 实现单向链表
 
@@ -2157,7 +2159,7 @@ class Queue {
     offer(element) { //加入队列
         this.ll.add(element)
     }
-    pool() { //删除队列
+    poll() { //删除队列
         return this.ll.remove(0)
     }
 }
@@ -2197,7 +2199,7 @@ class WriteStream extends EventEmitter {
     }
     //这里有两write是因为用户调用write时，需要判断当前是否是真的写入还是写入缓存中
     write(chunk, encoding = this.encoding, cb = () => { }) {//chunk:写入的内容,encoding：编码格式
-        //这里判断是写入还是缓存\
+        //这里判断是写入还是缓存
         //用户调用write方法时传入的内容可能是buffer类型或者是string类型
         chunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
         this.len += chunk.len;
@@ -2321,7 +2323,7 @@ class LinkedList {
     }
     reverseLinkedList(){
         function reverse(head){
-            if(head ==null || head.next == null) return head;
+            if(head == null || head.next == null) return head;
             let newHead = reverse(head.next);//把链表的head设置为当前head的下一个
             head.next.next = head;
             head.next = null;
