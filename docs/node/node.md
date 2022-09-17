@@ -2942,3 +2942,261 @@ rmdir('a', function () {
 
 ### 11.HTTP
 
+#### 1.前置知识点
+
+##### 协议分层(OSI协议分层)
+
+> (物，数)，网，传，(会，表，应)
+
+- 应用层 HTTP,FTP,DNS (与其他计算机进行通讯的一个应用服务，向用户提供应用服务时的通信活动)
+- 传输层 TCP（可靠） UDP 数据传输 (HTTP -> TCP DNS->UDP)
+- 网络层 IP 选择传输路线 (通过ip地址和mac地址)(使用ARP协议凭借mac地址进行通信)
+- 链路层 网络连接的硬件部分
+
+![17](img/17.png)
+
+##### HTTP特点与缺点
+
+特点
+
+- http是不保存状态的协议，使用cookie来管理状态 (登录 先给你cookie 我可以看一下你有没有cookie)
+- 为了防止每次请求都会造成无谓的tcp链接建立和断开，所以采用保持链接的方式 keep-alive
+- 以前发送请求后需要等待并收到响应，才能发下一个，现在都是管线化的方式 (js css 可以并发请求 6 2) cdn
+
+缺点
+
++ 通信采用明文
+
++ 不验证通信方的身份
+
++ 无法验证内容的完整性 (内容可能被篡改)
+
+> 通过SSL（安全套阶层）建立安全通信线路 HTTPS (超文本传输安全协议)
+
+##### HTTP方法
+
+> (get post 简单请求) Resful风格
+
+- GET:获取资源 /user？
+
+- POST:传输实体主体 请求体中
+
+- PUT：来传输文件
+
+- HEAD: 获取报文首
+
+- DELETE: 删除文件
+
+- OPTIONS:询问支持的方法 跨域 如果默认发送的是get/post 不会发送options的 ""复杂请求""
+
+  get /post (a:1) headers:{a:1} put / delete 复杂的请求
+
+**REST API** Resful风格 根据路径和不同的方法 就能确定对资源进行什么操作
+
+跨域是浏览器之前的 服务器之间没有跨域问题 反向代理 、后端设置cors
+
+c.com-> d.com OPTIONS 非简单请求会发送options (options 直接返回ok就可以了)
+
+##### HTTP状态码 
+
+curl命令行工具 postman
+
+1xx 信息性状态码 101 例如websocket upgrade
+
+2xx 成功状态码 200（成功） 204(没有响应体) 206(范围请求 暂停继续下载) 获取网页的部分请求
+
+3xx 重定向状态码 301 302 303 304 307
+
+>301 302 307 都是重定向的 302是临时重定向
+>
+>304 缓存 （服务器配置的）协商缓存
+
+4xx 客户端错误状态码 400 401 403 404 405 
+
+>400 bad request 请求出错一般是参数问题
+>
+>401 没有访问权限（没登录）
+>
+>403 是访问登录了，但是不够权限访问
+>
+>404 not found 找不到
+>
+>405 方法不允许
+
+5xx 服务端错误状态码 500 503
+
+>500 是服务端出错
+>
+>502 503 504 一般是负载均衡出问题
+
+##### 通讯和通讯规则
+
+>常用工具：postman  curl（Windows需要安装git）
+
+(发请求 命令行 curl命令) 服务端 `curl -v http://www.baidu.com`
+
+```shell
+C:\Users\87631>curl -v http://www.baidu.com
+*   Trying 183.232.231.172:80...
+* Connected to www.baidu.com (183.232.231.172) port 80 (#0)
+> GET / HTTP/1.1
+> Host: www.baidu.com
+> User-Agent: curl/7.83.1
+> Accept: */*
+>
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 200 OK
+< Accept-Ranges: bytes
+< Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+< Connection: keep-alive
+< Content-Length: 2381
+< Content-Type: text/html
+< Date: Sat, 17 Sep 2022 12:56:08 GMT
+< Etag: "588604ec-94d"
+< Last-Modified: Mon, 23 Jan 2017 13:28:12 GMT
+< Pragma: no-cache
+< Server: bfe/1.0.8.18
+< Set-Cookie: BDORZ=27315; max-age=86400; domain=.baidu.com; path=/
+<
+<!DOCTYPE html>
+<!--STATUS OK--><html> <head><meta http-equiv=content-type content=text/html;charset=utf-8><meta http-equiv=X-UA-Compatible content=IE=Edge><meta content=always name=referrer><link rel=stylesheet type=text/css href=http://s1.bdstatic.com/r/www/cache/bdorz/baidu.min.css><title>百度一下，你就知道...
+```
+
+Http报文，http交互的信息称之为http报文
+
+![img](img/18.png)
+
+![18](img/19.png)
+
+通用首部字段：请求和响应报文都有的首部
+
+实体首部字段：描述实体部分的字段
+
+![img](img/20.png)
+
+![img](img/21.png)
+
+#### 2.在Node中使用http模块
+
+```js
+const http = require('http')
+let server = http.createServer(function (req, res) {
+    console.log('1')
+})
+server.on('request', function (req, res) {
+    console.log('2')
+})//这种写法不常用，常用上面create的那种
+server.listen(3000,function(){
+    console.log('server start 3000')
+})
+//在vscode中runcode这段代码 会先打印出server start 3000，然后再通过浏览器访问http://localhost:3000/就会打印出1 2
+//注：服务端代码改变以后需要重启才生效。可以通过一个工具来实现nodemon [node monintor:npm install nodemon -g] 监听文件的变化
+//用法：nodemon + 文件名即可
+```
+
+```js
+const http = require('http')
+let server = http.createServer(function (req, res) {
+    console.log('1')
+    console.log(req.method) //请求方法默认是大写的
+    console.log(req.url) //备注：此处是拿不到URL地址中的hash的，因为hash是前端浏览器做路由的。不会传递给服务器
+    console.log(req.httpVersion)
+    console.log(req.headers)//所有的请求头信息，里面的可以都是小写的（服务器接收到的）。但是浏览器中network中的request header则是大写的
+})
+let port = 3000; //端口尽量使用3000以上的
+server.listen(port,function(){
+    console.log(`server start ${port}'`)
+})
+//如果端口被占用则监听报错事件重新设置端口
+server.on('error',function(err){
+    if(err.errno == 'EADDRINUSE'){
+        server.listen(++port)
+    }
+})
+```
+
+解析出URL后问号的参数
+
+```js
+const http = require('http')
+let server = http.createServer(function (req, res) {
+    let query = {}
+    req.url.replace(/([^&?=]+)=([^&?=]+)/g,function(){
+        query[arguments[1]] = arguments[2]
+    });
+    console.log(query)//{ a: '1111', b: '2222' }
+})
+
+let port = 3000;
+server.listen(port,function(){
+    console.log(`server start ${port}'`)
+})
+server.on('error',function(err){
+    if(err.errno == 'EADDRINUSE'){
+        server.listen(++port)
+    }
+})
+```
+
+但是Node中有现成的URL模块提供给我们处理URL参数
+
+```js
+const http = require('http')
+const url = require('url')
+let server = http.createServer(function (req, res) {
+    let { pathname, query } = url.parse(req.url, true);
+    console.log(pathname, query)// / [Object: null prototype] { a: '1111', b: '2222' }
+    //req是一个可读流
+    let arr = []
+    // curl -v -X POST a=1 localhost:3000
+    //如果流中的数据为空，内部会调用的push(null)，只要一调用了push方法就会触发end事件，例如使用curl -v -X GET localhost:3000
+    req.on('data', function (chunk) {
+        arr.push(chunk)
+    })
+    req.on('end',function(){
+        console.log(Buffer.concat(arr).toString())//a=1
+    })
+})
+let port = 3000; //端口尽量使用3000以上的
+server.listen(port, function () {
+    console.log(`server start ${port}'`)
+})
+//如果端口被占用则监听报错事件重新设置端口
+server.on('error', function (err) {
+    if (err.errno == 'EADDRINUSE') {
+        server.listen(++port)
+    }
+})
+```
+
+客户端数据设置
+
+> 响应行和响应头 响应体的设置顺序不能发生变化。
+>
+> res是一个可写流，write end
+
+```js
+const http = require('http')
+const url = require('url')
+let server = http.createServer(function (req, res) {
+    res.statusCode = 600 //自定义响应码
+    res.statusMessage = "no status"//这个不可写中文
+    res.setHeader('a',1)//设置响应头
+    res.write('ok') //分段响应，如果是分段响应的，则请求中会有一个Transfer-Encoding：chunkeds 的标志，反之则没有
+    res.end()//标识响应结束
+})
+let port = 3000;
+server.listen(port, function () {
+    console.log(`server start ${port}'`)
+})
+server.on('error', function (err) {
+    if (err.errno == 'EADDRINUSE') {
+        server.listen(++port)
+    }
+})
+```
+
+![img](img/22.png)
+
+### 3.实现自己的静态服务
+
