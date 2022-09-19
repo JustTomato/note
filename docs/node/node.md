@@ -3200,3 +3200,480 @@ server.on('error', function (err) {
 
 ### 3.实现自己的静态服务
 
+```js
+//服务器一般具有两个功能：返回静态文件和返回数据
+
+const http = require('http');
+const url = require('url');
+const path = require('path');
+const fs = require('fs').promises;
+const { createReadStream } = require('fs');
+const mime = require('mime')
+
+// http.createServer(() => {}) //node大多数代码都是有回调函数的。但是我们在日常开发中要放弃这种写法，要基于Promise + async/await的写法
+
+class staticServer {
+    //第一种
+    // handleRequest() {
+    //     return ()=>{
+    //         console.log(this)
+    //     }
+    // }
+    async handleRequest(req, res) {
+        // console.log(this)
+        const { pathname } = url.parse(req.url, true)
+        //根据路径返回对应的资源
+        let filePath = path.join(__dirname, pathname)
+        console.log(filePath)
+        //判断是否为文件夹 
+        //这里采用异步的fs.stat而不是采用同步的fs.existsSync，因为是：比如去读取/node.md文件时，该文件非常大，
+        //此时访问localhost:3000/note.md一直在读取中，会导致后续用户不论是访问localhost:3000/a还是其他的都是在等待一个执行完毕，阻塞了。所以需要才用异步
+        try {
+            let statObj = await fs.stat(filePath);
+            if (statObj.isFile()) {
+                //文件
+                //1.最low的写法
+                // let data = await fs.readFile(filePath)
+                // res.end(data)
+
+                //2.改用流的方式
+                //设置header头
+                //但是文件类型写死了。不够灵活，用户要是请求其他类型的文件呢？所以要动态的获取文件类型。可以使用mime模块 【npm install mime】
+                // res.setHeader('Content-Type','text/html;charset=utf-8')
+                res.setHeader('Content-Type', mime.getType(filePath) + ';charset=utf-8')
+                createReadStream(filePath).pipe(res); //res是一个可写流  pipe方法的调用就是：可读流.pipe(可写流)
+
+            } else {
+                //文件夹
+                filePath = path.join(filePath,'index.html');
+                await fs.access(filePath) //异步方法，判断这个文件是否能访问，也可以使用同步方法fs.existsSync
+                res.setHeader('Content-Type','text/html;charset=utf-8')
+                createReadStream(filePath).pipe(res);
+            }
+        } catch (e) {
+           this.sendError(e,req,res)
+        }
+
+    }
+    sendError(e,req,res){
+        res.statusCode = '404'
+        res.end('not found')
+    }
+    //第二种 http.createServer(() => this.handleRequest())
+    start(...args) {
+        const server = http.createServer(this.handleRequest.bind(this)) //第三种 
+        server.listen(...args)
+    }
+}
+new staticServer().start(3000, function () {
+    console.log(`server start 3000`)
+})
+```
+
+![img](img/23.png)
+
+##### 实现自己的http-server工具
+
+有现成的模块包`npm install http-server -g`
+
+然后进入到自己想要生成这样服务的文件夹路径直接使命令http-server即可
+
+![img](img/24.png)
+
+我们自己来实现这样的一个工具【npm包】
+
+1.在对应的文件夹中`npm init -y`生成基本配置
+
+2.在package.json文件中新增bin字段并配置对应的值
+
+```json
+{
+  "name": "sapphire-hs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin":{
+    "shs":"./bin/www.js",
+    "sh-server":"./bin/www.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+```
+
+3.在根目录新建bin文件夹并在bin文件夹中新建www.js文件并配置文件的执行环境
+
+```js
+#! /usr/bin/env node
+console.log('ok')
+//这里只是简单的测试而已
+```
+
+4.把这个包临时配置到全局环境中 `npm link` 或者强制`npm link --force `然后输入我们在package.json文件配置的shs，控制台输出OK
+
+```shell
+PS C:\Users\87631\Desktop\workSpace\test\node\11.http-server> npm link
+
+added 1 package in 499ms
+PS C:\Users\87631\Desktop\workSpace\test\node\11.http-server> shs
+ok
+```
+
+5.配置其他的指令 例如 --help 安装`commander`模块来实现
+
+```shell
+C:\Users\87631\Desktop\workSpace\test\node\11.http-server>npm install commander
+
+added 1 package in 622ms
+```
+
+实现静态服务
+
+```js
+const http = require('http');
+const path = require('path');
+const fs = require('fs').promises;
+const url = require('url');
+const { createReadStream, createWriteStream, readFileSync } = require('fs')
+//渲染页面需要的模板引擎 ejs
+const ejs = require('ejs')//需要安装
+//文件类型
+const mime = require('mime');
+//打印颜色 chalk
+// const chalk = require('chalk')
+
+class Server {
+    constructor(options) {
+        this.port = options.port;
+        this.directory = options.directory;
+        this.template = readFileSync(path.resolve(__dirname, 'render.html'), 'utf8');
+    }
+    async handleRequest(req, res) {
+        let { pathname } = url.parse(req.url)
+        pathname = decodeURIComponent(pathname) //可能路径含有中文
+        let filePath = path.join(this.directory, pathname);
+        let statObj = await fs.stat(filePath);
+        try {
+            if (statObj.isFile()) {
+                this.sendFile(req, res, statObj, filePath)
+            } else {
+                //需要列出来文件
+                let dirs = await fs.readdir(filePath)
+                dirs = dirs.map(item => ({//当前根据文件名产生目录和文件名
+                    dir:item,
+                    href:path.join(pathname,item)
+                }))
+                let result = await ejs.render(this.template, {dirs}, { async: true });
+                res.setHeader('Content-Type','text/html;charset=utf-8')
+                res.end(result)
+            }
+        } catch (e) {
+            this.sendError(req, res, e)
+        }
+
+    }
+    sendError(req, res, e) {
+        res.statusCode = 404
+        res.end('not found')
+    }
+    sendFile(req, res, statObj, filePath) {
+        res.setHeader('Content-Type', mime.getType(filePath) + ';charset=utf-8');
+        createReadStream(filePath).pipe(res);
+    }
+    start() {
+        const server = http.createServer(this.handleRequest.bind(this));
+        server.listen(this.port, () => {
+            // console.log(`${chalk.yellow('starting up zf-server:')}./${path.relative(process.cwd(), this.directory)}`);
+            // console.log(`http://localhost:${chalk.green(this.port)}`)
+        })
+    }
+}
+module.exports = Server
+```
+
+对比缓存
+
+```js
+//设置缓存 默认强制缓存10s 10s内不再向服务器发起请求（首页不会被缓存，假设网络断开之后，还能找到缓存里的首页，不合理）
+//引用的资源可以被缓存
+res.setHeader('Expires',new Date(Date.now() + 10* 1000).toGMTString()) //支持字符串格式 所以需要转字符串
+//新版本
+// res.setHeader('Cache-Control','no-cache');
+res.setHeader('Cache-Control','max-age=10');
+//no-cache：表示每次都向服务器发送请求 
+//no-store:表示浏览器不进行缓存
+//两者的区别：no-cache是已经做了缓存但是每次请求都不走缓存。no-store是根本就没有做缓存
+//http1.1跟新浏览器都能识别cache-control
+//max-age=10 是强缓存
+```
+
+```js
+//但是如果文件在10s内发生修改之后呢？【有些文件可以这样设置，有些文件10s后还是不变】
+//协商缓存：协商是否需要返回最新的内容，如果不需要则直接给304状态码，表示找缓存即可
+//大概流程：默认先走强制缓存，10秒内不会发送请求到服务器中而是采用浏览器的缓存，但是10秒之后会再次发送请求，此时服务器就要进行对比。
+//1.文件没有变化，则直接返回状态码304即可。浏览器则会根据304状态码去浏览器缓存中查找对应的文件。
+//2.文件变化了。则会返回最新的文件内容。但10秒之后还是会走缓存。然后不停的循环
+//看文件是都变化
+//1.根据修改时间来判断文件是否修改了 面试常考的304考点【主要是服务端设置】
+let ifModiFiedSince = req.headers['if-modified-since']; //浏览器传递过来的时间（只有设置了Last-Modified 浏览器才会携带这个过来）
+let ctime = statObj.ctime.toGMTString();
+res.setHeader('Last-Modified',ctime);
+if(ifModiFiedSince != ctime){ //如果浏览器传递的时间跟服务器设置的一样则没有被修改过。
+    return false
+}
+statObj.ctime //文件对象里面有一个changetime 修改时间
+return true
+```
+
+完整代码
+
+```js
+
+const http = require('http');
+const path = require('path');
+const fs = require('fs').promises;
+const url = require('url');
+const { createReadStream, createWriteStream, readFileSync } = require('fs')
+//渲染页面需要的模板引擎 ejs
+const ejs = require('ejs')//需要安装
+//文件类型
+const mime = require('mime');
+//打印颜色 chalk
+// const chalk = require('chalk')
+
+class Server {
+    constructor(options) {
+        this.port = options.port;
+        this.directory = options.directory;
+        this.template = readFileSync(path.resolve(__dirname, 'render.html'), 'utf8');
+    }
+    async handleRequest(req, res) {
+        let { pathname } = url.parse(req.url)
+        pathname = decodeURIComponent(pathname) //可能路径含有中文
+        let filePath = path.join(this.directory, pathname);
+        let statObj = await fs.stat(filePath);
+        try {
+            if (statObj.isFile()) {
+                this.sendFile(req, res, statObj, filePath)
+            } else {
+                //需要列出来文件
+                let dirs = await fs.readdir(filePath)
+                dirs = dirs.map(item => ({//当前根据文件名产生目录和文件名
+                    dir:item,
+                    href:path.join(pathname,item)
+                }))
+                let result = await ejs.render(this.template, {dirs}, { async: true });
+                res.setHeader('Content-Type','text/html;charset=utf-8')
+                res.end(result)
+            }
+        } catch (e) {
+            this.sendError(req, res, e)
+        }
+
+    }
+    sendError(req, res, e) {
+        res.statusCode = 404
+        res.end('not found')
+    }
+    cache(req, res, statObj, filePath){
+        //设置缓存 默认强制缓存10s 10s内不再向服务器发起请求（首页不会被缓存，假设网络断开之后，还能找到缓存里的首页，不合理）
+        //引用的资源可以被缓存
+        res.setHeader('Expires',new Date(Date.now() + 10* 1000).toGMTString()) //支持字符串格式 所以需要转字符串
+        //新版本
+        // res.setHeader('Cache-Control','no-cache');
+        res.setHeader('Cache-Control','max-age=10');
+        //no-cache：表示每次都向服务器发送请求 
+        //no-store:表示浏览器不进行缓存
+        //两者的区别：no-cache是已经做了缓存但是每次请求都不走缓存。no-store是根本就没有做缓存
+        //http1.1跟新浏览器都能识别cache-control
+        //max-age=10 是强缓存
+
+        //但是如果文件在10s内发生修改之后呢？【有些文件可以这样设置，有些文件10s后还是不变】
+
+        //协商缓存：协商是否需要返回最新的内容，如果不需要则直接给304状态码，表示找缓存即可
+
+        //大概流程：默认先走强制缓存，10秒内不会发送请求到服务器中而是采用浏览器的缓存，但是10秒之后会再次发送请求，此时服务器就要进行对比。
+        //1.文件没有变化，则直接返回状态码304即可。浏览器则会根据304状态码去浏览器缓存中查找对应的文件。
+        //2.文件变化了。则会返回最新的文件内容。但10秒之后还是会走缓存。然后不停的循环
+
+        //看文件是都变化
+        //1.根据修改时间来判断文件是否修改了 面试常考的304考点【主要是服务端设置】
+        let ifModiFiedSince = req.headers['if-modified-since']; //浏览器传递过来的时间（只有设置了Last-Modified 浏览器才会携带这个过来）
+        let ctime = statObj.ctime.toGMTString();
+        res.setHeader('Last-Modified',ctime);
+        if(ifModiFiedSince != ctime){ //如果浏览器传递的时间跟服务器设置的一样则没有被修改过。
+            return false
+        }
+        statObj.ctime //文件对象里面有一个changetime 修改时间
+        return true
+    }
+    sendFile(req, res, statObj, filePath) {
+        
+        if(this.cache(req, res, statObj, filePath)){
+            res.statusCode = 304;
+            return res.end()
+        }else{
+
+        }
+        res.setHeader('Content-Type', mime.getType(filePath) + ';charset=utf-8');
+        createReadStream(filePath).pipe(res);
+    }
+    start() {
+        const server = http.createServer(this.handleRequest.bind(this));
+        server.listen(this.port, () => {
+            // console.log(`${chalk.yellow('starting up zf-server:')}./${path.relative(process.cwd(), this.directory)}`);
+            // console.log(`http://localhost:${chalk.green(this.port)}`)
+        })
+    }
+}
+module.exports = Server
+```
+
+但是上述的if-modified-since的方案也是有缺点的，例如文件修改了，但是修改时间没变呢？又或者在毫秒级别发生的文件修改呢？
+
+`E-tag`指纹方案：原理为根据文件产生唯一的标识（MD5戳）指纹方案也是有缺点的
+
+先使用一下node中内置的MD5摘要模块
+
+```js
+//md5：摘要算法，不叫加密算法，因为加密算法通常都有解密的方式。而md5无法解密
+//摘要：自己简单的理解就是摘出来部分关键的信息，随机的。正式因为这样，我们才无法使用摘要反推出来文章的内容
+//md5特点
+//1.两段不同内容摘要出来结果的长度相同
+//2.如果传入的参数不同，则输出的结果也不同（传入的参数一样，则结果一样）
+//3.MD5不可逆
+//4.网上说的md5解密是指撞库暴力破解，即生成对应的摘要放库里，撞出来相同的即解密出来了
+
+const crpto = require('crypto');
+console.log(crpto.createHash('md5').update('1234').digest('base64'))
+console.log(crpto.createHash('md5').update('1235').digest('base64'))
+//gdyb21LQTcIANtvYMT7QVQ==
+//mZZTXgclinu/2LEyQ1xZYg==
+//update方法里可以放buffer或者字符串
+
+//不适合大文件摘要，因为在读取大文件内容时，就很消耗性能了
+```
+
+完整的缓存代码
+
+```js
+
+const http = require('http');
+const path = require('path');
+const fs = require('fs').promises;
+const url = require('url');
+const { createReadStream, createWriteStream, readFileSync } = require('fs')
+//渲染页面需要的模板引擎 ejs
+const ejs = require('ejs')//需要安装
+//文件类型
+const mime = require('mime');
+//打印颜色 chalk
+// const chalk = require('chalk')
+const crpto = require('crypto');
+
+class Server {
+    constructor(options) {
+        this.port = options.port;
+        this.directory = options.directory;
+        this.template = readFileSync(path.resolve(__dirname, 'render.html'), 'utf8');
+    }
+    async handleRequest(req, res) {
+        let { pathname } = url.parse(req.url)
+        pathname = decodeURIComponent(pathname) //可能路径含有中文
+        let filePath = path.join(this.directory, pathname);
+        let statObj = await fs.stat(filePath);
+        try {
+            if (statObj.isFile()) {
+                this.sendFile(req, res, statObj, filePath)
+            } else {
+                //需要列出来文件
+                let dirs = await fs.readdir(filePath)
+                dirs = dirs.map(item => ({//当前根据文件名产生目录和文件名
+                    dir: item,
+                    href: path.join(pathname, item)
+                }))
+                let result = await ejs.render(this.template, { dirs }, { async: true });
+                res.setHeader('Content-Type', 'text/html;charset=utf-8')
+                res.end(result)
+            }
+        } catch (e) {
+            this.sendError(req, res, e)
+        }
+
+    }
+    sendError(req, res, e) {
+        res.statusCode = 404
+        res.end('not found')
+    }
+    cache(req, res, statObj, filePath) {
+        //设置缓存 默认强制缓存10s 10s内不再向服务器发起请求（首页不会被缓存，假设网络断开之后，还能找到缓存里的首页，不合理）
+        //引用的资源可以被缓存
+        res.setHeader('Expires', new Date(Date.now() + 10 * 1000).toGMTString()) //支持字符串格式 所以需要转字符串
+        //新版本
+        // res.setHeader('Cache-Control','no-cache');
+        res.setHeader('Cache-Control', 'max-age=10');
+        //no-cache：表示每次都向服务器发送请求 
+        //no-store:表示浏览器不进行缓存
+        //两者的区别：no-cache是已经做了缓存但是每次请求都不走缓存。no-store是根本就没有做缓存
+        //http1.1跟新浏览器都能识别cache-control
+        //max-age=10 是强缓存
+
+        //但是如果文件在10s内发生修改之后呢？【有些文件可以这样设置，有些文件10s后还是不变】
+
+        //协商缓存：协商是否需要返回最新的内容，如果不需要则直接给304状态码，表示找缓存即可
+
+        //大概流程：默认先走强制缓存，10秒内不会发送请求到服务器中而是采用浏览器的缓存，但是10秒之后会再次发送请求，此时服务器就要进行对比。
+        //1.文件没有变化，则直接返回状态码304即可。浏览器则会根据304状态码去浏览器缓存中查找对应的文件。
+        //2.文件变化了。则会返回最新的文件内容。但10秒之后还是会走缓存。然后不停的循环
+
+        //看文件是都变化
+        //1.根据修改时间来判断文件是否修改了 面试常考的304考点【主要是服务端设置】
+        let ifModiFiedSince = req.headers['if-modified-since']; //浏览器传递过来的时间（只有设置了Last-Modified 浏览器才会携带这个过来）
+        let ctime = statObj.ctime.toGMTString();
+        let ifNoneMatch = req.headers['if-none-match'];
+        //设置Etag
+        let etag = crpto.createHash('md5').update(readFileSync(filePath)).digest('base64');
+
+
+        res.setHeader('Last-Modified', ctime);
+        res.setHeader('Etag', etag)
+        if (ifModiFiedSince != ctime) { //如果浏览器传递的时间跟服务器设置的一样则没有被修改过。
+            return false
+        }
+        if (ifNoneMatch !== etag) {
+            return false
+        }
+
+        
+        statObj.ctime //文件对象里面有一个changetime 修改时间
+
+
+        return true
+    }
+    sendFile(req, res, statObj, filePath) {
+
+        if (this.cache(req, res, statObj, filePath)) {
+            res.statusCode = 304;
+            return res.end()
+        } else {
+
+        }
+
+        res.setHeader('Content-Type', mime.getType(filePath) + ';charset=utf-8');
+        createReadStream(filePath).pipe(res);
+    }
+    start() {
+        const server = http.createServer(this.handleRequest.bind(this));
+        server.listen(this.port, () => {
+            // console.log(`${chalk.yellow('starting up zf-server:')}./${path.relative(process.cwd(), this.directory)}`);
+            // console.log(`http://localhost:${chalk.green(this.port)}`)
+        })
+    }
+}
+module.exports = Server
+```
+
