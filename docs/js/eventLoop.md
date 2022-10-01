@@ -58,7 +58,7 @@ setTimeout(()=>{
 
 例题：
 
-```JS
+```js
 setTimeout(()=>{
     console.log(1)
 },20)
