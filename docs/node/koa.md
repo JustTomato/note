@@ -1113,5 +1113,161 @@ app.listen(3000)
 
 存放路由 - routes文件夹
 
-路由对应的处理逻辑 -、(⊙o⊙)…入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让入日让
+路由对应的处理逻辑 -controller
+
+数据处理 - model
+
+公共文件 - public
+
+index.js
+
+```js
+//views 关于模版引擎的文件
+//routes 路由 可以使用Koa-router 根据不同的功能来划分路由
+//model 存放数据库相关的
+//controller 控制器：每一个路由都对应一个控制器
+//services 提供服务，控制器中可以使用服务中的数据
+
+//博客系统 文章管理和用户管理
+
+const Koa = require('koa');
+const app = new Koa();
+const bodyparser = require('koa-bodyparser');
+const static = require('koa-static');
+const views = require('koa-views')
+const path  = require('path')
+
+const router = require('./routes/index');//获得路由系统
+
+// console.log(router)
+//先解析再路由
+app.use(bodyparser());
+app.use(views(path.resolve(__dirname,'views'),{
+    map:{
+        'html':'ejs'
+    }
+}))
+app.use(static(path.resolve(__dirname,'public')));
+//注册路由
+app.use(router());
+//模板引擎 
+//npm install ejs koa-views koa-static koa-bodyparser
+
+app.listen(3000)
+```
+
+controller
+
+articleController.js
+
+```js
+class ArticleController{
+    add(ctx,next){
+        ctx.body = '文章添加'
+    }
+    list(ctx,next){
+        ctx.body = '文章列表'
+    }
+}
+
+module.exports = ArticleController;
+```
+
+userController.js
+
+```js
+class UserController{
+    async add(ctx,next){
+        // ctx.statusCode = 200;
+        ctx.body = '用户添加';
+        await ctx.render('a.html',{name:100})
+    }
+    list(ctx,next){
+        ctx.body = '用户列表'
+    }
+}
+
+module.exports = UserController;
+```
+
+public - index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    hello
+</body>
+</html>
+```
+
+routes
+
+articleRouter.js
+
+```js
+//1.心间对应模块的路由：添加文章 文章查询
+//2.引入对应的控制器
+const ArticleController = require('../controller/articleController');
+let Router = require('koa-router');
+let articleCtrl = new ArticleController();
+//划分前缀，像文章都是article开头 article/add article/remove
+const router = new Router({prefix:'/article'});
+console.log('-----',articleCtrl)
+router.get('/add',articleCtrl.add);
+router.get('/list',articleCtrl.list); //每一个路由对应一个控制器，所以需要在controller文件夹中心间对应的控制器
+
+module.exports = router
+```
+
+index.js
+
+```js
+//整合模块
+let articleRouter = require('./articleRouter');
+let userRouter = require('./userRouter');
+
+let combineRouters = require('koa-combine-routers');
+module.exports = combineRouters(articleRouter,userRouter)
+```
+
+userRouter.js
+
+```js
+//1.心间对应模块的路由：
+//2.引入对应的控制器
+
+const UserController = require('../controller/userController');
+let Router = require('koa-router');
+let userCtrl = new UserController();
+const router = new Router({prefix:'/user'});
+
+router.get('/add',userCtrl.add);
+router.get('/list',userCtrl.list);
+
+module.exports = router
+```
+
+views - a.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <%=name%>
+</body>
+</html>
+```
 
