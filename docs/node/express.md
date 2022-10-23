@@ -64,3 +64,158 @@ express
 
 ### 4.手动实现express
 
+测试文件1.server.js
+
+```js
+const express = require('./express'); //const koa = require('koa)
+const app = express(); //cosnt app = new Koa();
+//由于express实现的比较早，但是没有class类的概念而是采用了构造函数的写法，是函数执行的写法
+//koa-router 也是借鉴了express中自带的路由编写的
+app.get('/', function (req, res) {
+    //参数中的回调函数中参数只有原生的req\res。没有像koa封装了ctx
+    res.end('home')
+}) //app.use();
+
+app.get('/about', function (req, res) {
+    res.end('about')
+})
+app.all('*',function(req,res){
+    res.end('all')
+})
+app.listen(3000,function(){
+    console.log('server start')
+})
+```
+
+express/index.js
+
+```js
+let express = require('./lib/express');
+module.exports = express
+```
+
+express/lib/express.js
+
+```js
+const http = require('http');
+const url = require('url');
+const routes = [
+    {
+        path: '*',
+        method: 'all',
+        handler: (req, res) => { res.end(`Cannot ${req.method} ${req.url}`) }
+    }
+]
+
+function createApplication() {
+    return {
+        all(path, callback) {
+            routes.push({
+                path,
+                method: 'all',
+                handler: callback
+            })
+        },
+        get(path, callback) {
+            routes.push({
+                path,
+                method: 'get',
+                handler: callback
+            })
+        },
+        listen(...args) {
+            // Array.prototype.slice.call(arguments);
+            const server = http.createServer((req, res) => {
+                let { pathname } = url.parse(req.url);
+                let requestMethod = req.method.toLowerCase();
+                for (let i = 1; i < routes.length; i++) {
+                    let { path, method, handler } = routes[i]
+                    if ((pathname == path || path === '*') && (method === requestMethod || method === 'all')) {
+                        return handler(req, res)
+                    }
+                }
+                routes[0].handler(req, res)
+
+            })
+            server.listen(...args)
+        }
+    }
+}
+
+module.exports = createApplication
+```
+
+拆分express.js
+
+> 1.createApplication 
+>
+> 2.application
+>
+> 3.router
+
+1.在lib中新建application.js，拆分应用层
+
+application.js
+
+```js
+const http = require('http');
+const url = require('url');
+const routes = [
+    {
+        path: '*',
+        method: 'all',
+        handler: (req, res) => { res.end(`Cannot ${req.method} ${req.url}`) }
+    }
+]
+function Application() {
+
+}
+Application.prototype.get = function (path, callback) {
+    routes.push({
+        path,
+        method: 'get',
+        handler: callback
+    })
+};
+// Application.prototype.all = function (path, callback) {
+//     routes.push({
+//         path,
+//         method: 'all',
+//         handler: callback
+//     })
+// };
+Application.prototype.listen = function (...args) {
+    // Array.prototype.slice.call(arguments);
+    const server = http.createServer((req, res) => {
+        let { pathname } = url.parse(req.url);
+        let requestMethod = req.method.toLowerCase();
+        for (let i = 1; i < routes.length; i++) {
+            let { path, method, handler } = routes[i]
+            // if ((pathname == path || path === '*') && (method === requestMethod || method === 'all')) {
+            if (pathname == path && method === requestMethod) {
+                return handler(req, res)
+            }
+        }
+        routes[0].handler(req, res)
+
+    })
+    server.listen(...args)
+}
+
+module.exports = Application
+```
+
+express.js
+
+```js
+const Application = require('./application.js');
+function createApplication() {
+    return new Application()
+}
+module.exports = createApplication
+```
+
+2.应用系统跟路由系统的拆分，新建router文件夹（因为路由文件比较多），新建index.js
+
+
+
