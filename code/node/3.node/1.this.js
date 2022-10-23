@@ -1,0 +1,61 @@
+// console.log(process.platform);
+// console.log(process.cwd());
+// console.log(process.chdir('a'))
+// console.log(process.cwd());
+console.log(process.env);
+// {
+//     ALLUSERSPROFILE: 'C:\\ProgramData',
+//     APPDATA: 'C:\\Users\\87631\\AppData\\Roaming',
+//     APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL: '1',
+//     'asl.log': 'Destination=file',
+//     CHROME_CRASHPAD_PIPE_NAME: '\\\\.\\pipe\\crashpad_4856_CRYOGCFEXUKSYSTY',
+//     CommonProgramFiles: 'C:\\Program Files\\Common Files',
+//     'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+//     CommonProgramW6432: 'C:\\Program Files\\Common Files',
+//     COMPUTERNAME: 'ART3MIS',
+//     ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+//     DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+//     ELECTRON_RUN_AS_NODE: '1',
+//     HOMEDRIVE: 'C:',
+//     HOMEPATH: '\\Users\\87631',
+//     LOCALAPPDATA: 'C:\\Users\\87631\\AppData\\Local',
+//     LOGONSERVER: '\\\\ART3MIS',
+//     NUMBER_OF_PROCESSORS: '8',
+//     OneDrive: 'C:\\Users\\87631\\OneDrive',
+//     ORIGINAL_XDG_CURRENT_DESKTOP: 'undefined',
+//     OS: 'Windows_NT',
+//     Path: 'C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Bandizip\\;C:\\Program Files\\nodejs\\;C:\\Users\\87631\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files (x86)\\Tencent\\QQGameTempest\\Hall.57773\\;C:\\Users\\87631\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\87631\\AppData\\Roaming\\npm',
+//     PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC',
+//     PROCESSOR_ARCHITECTURE: 'AMD64',
+//     PROCESSOR_IDENTIFIER: 'Intel64 Family 6 Model 151 Stepping 5, GenuineIntel',
+//     PROCESSOR_LEVEL: '6',
+//     PROCESSOR_REVISION: '9705',
+//     ProgramData: 'C:\\ProgramData',
+//     ProgramFiles: 'C:\\Program Files',
+//     'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+//     ProgramW6432: 'C:\\Program Files',
+//     PROMPT: '$P$G',
+//     PSModulePath: 'C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+//     PUBLIC: 'C:\\Users\\Public',
+//     SESSIONNAME: 'Console',
+//     SystemDrive: 'C:',
+//     SystemRoot: 'C:\\WINDOWS',
+//     TEMP: 'C:\\Users\\87631\\AppData\\Local\\Temp',
+//     TMP: 'C:\\Users\\87631\\AppData\\Local\\Temp',
+//     USERDOMAIN: 'Art3mis',
+//     USERDOMAIN_ROAMINGPROFILE: 'Art3mis',
+//     USERNAME: 'Art3mis',
+//     USERPROFILE: 'C:\\Users\\87631',
+//     VSCODE_AMD_ENTRYPOINT: 'vs/workbench/api/node/extensionHostProcess',
+//     VSCODE_CODE_CACHE_PATH: 'C:\\Users\\87631\\AppData\\Roaming\\Code\\CachedData\\e4503b30fc78200f846c62cf8091b76ff5547662',
+//     VSCODE_CWD: 'C:\\Users\\87631\\AppData\\Local\\Programs\\Microsoft VS Code',
+//     VSCODE_HANDLES_UNCAUGHT_ERRORS: 'true',
+//     VSCODE_IPC_HOOK: '\\\\.\\pipe\\09b4ed86dcb44f1bedc1eb7541afe217-1.70.2-main-sock',
+//     VSCODE_NLS_CONFIG: '{"locale":"zh-cn","availableLanguages":{},"_languagePackSupport":true}',
+//     VSCODE_PID: '4856',
+//     windir: 'C:\\WINDOWS',
+//     __COMPAT_LAYER: 'DetectorsAppHealth'
+//   }
+
+const program = require('commander')
+program.parse(process.argv)

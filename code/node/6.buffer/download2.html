@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <input type="file" id="avatar" multiple>
+    <script>
+        //方法二 通过HTML5实现二进制的读取
+        //实现预览
+        avatar.addEventListener('change', (e) => {
+            let file = e.target.files[0];
+            // console.log(file) //此处拿到的也是二进制类型。但不是blob文件类型
+            // // lastModified: 1660368495023
+            // // lastModifiedDate: Sat Aug 13 2022 13: 28: 15 GMT + 0800(中国标准时间) { }
+            // // name: "e9c2d51ca61cf99b2bb5b49ef3b42b51.jpeg"
+            // // size: 376019
+            // // type: "image/jpeg"
+            // // webkitRelativePath: ""
+            // // [[Prototype]]: File
+            // let fileReader = new FileReader();
+            // fileReader.onload = function(){
+            //     let img = document.createElement('img');
+            //     img.src = fileReader.result;
+            //     document.body.appendChild(img)
+            // }
+            // fileReader.readAsDataURL(file); //dataUrl就是base64，所有的内容都可以转成base64
+
+
+            let img = document.createElement('img');
+            let url = URL.createObjectURL(file)
+            img.src = url
+            document.body.appendChild(img);
+            URL.revokeObjectURL(url);//创建完成之后需要释放掉，因为是一个指针 //立马就释放掉了
+        })
+
+       
+        //字节 汉字 
+        //不同的编码类型，汉字的字节是不同的，例如GBK格式，一个汉字对应两个字节，utf8则是三个
+
+        //编码的发展历程：
+        //最早出现的是叫ASCII编码，它代表的是一个字符或一个字母可以用ASCII码表示。
+        //一个字节由八个位组成。0000 0000 ~ 1111 1111 （共有255个。而在英语中数字加字母加上一些特殊符号，完全可以足够ASCII码去使用，但是别的语言不一样从而创造出其他的编码格式）
+        //将任意进制转化为任意进制
+        // 0000 0001 ===> 1*2º
+        // 0000 0010 ===> 1*2¹
+        // 通用：当前所在的值 * 进制^所在位，累加之后就是10进制的值
+
+        //gb2312：一个汉字由两个字节组成 00000000 00000000 ~ 11111111 11111111 （255*255 = 65025）。这么多位的数量并没有完全使用完。只使用了其中的一部分来设计汉字
+        //在gb2312的基础上进行延伸。GBK。但是后面又发现少数民族的字体也不能使用GBK编码表示，又在GBK的基础上延伸出来了GB18030
+
+        //由于不同的语言所采用的的编码格式不统一，后来Unicode组织想规范上述的编码，但是没统一起来。被utf8搞定了（注：JS语言采用的是UTF16（历史原因））
+        //utf8 ： 一个汉字是三个字节
+
+        //不建议这么去操作（只是演示作用）
+        const arrayBuffer = new ArrayBuffer(4); //4表示四个字节
+        let x = new Uint8Array(arrayBuffer);
+        x[0] = 1;
+        x[1] = 255;
+        console.log(x)
+
+
+
+
+        //把十进制转化为任意进制
+        //例如0xff = 2进制的11111111 = 10进制的255
+        // 十六进制的100转成十进制是多少，直接100除以16等于6模4，连贯念得出64
+        //虽然node中的buffer是二进制的，但是buffer的展示方式是16进制的。（因为如果采用二进制来展示，会导致很长，所以为了简便采用16进制来展示）
+    </script>
+</body>
+
+</html>

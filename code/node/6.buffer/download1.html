@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <script>
+        //前端实现文件下载 方法一
+        let str = `<div>download test</div>`;
+        // Blob类型 即文件类型
+        const blob = new Blob([str], {
+            type: 'text/html'
+        })
+        const a = document.createElement('a');
+        a.setAttribute('download', 'index.html');
+        a.href = URL.createObjectURL(blob) //href后面跟的链接，而URL.createObjectURL可以把二进制转化为链接
+        //【用于创建 URL 的 File 对象、Blob 对象或者 MediaSource 对象。​】
+        // URL.revokeObjectURL() 可以移除URL 
+        a.click();
+    </script>
+</body>
+
+</html>
