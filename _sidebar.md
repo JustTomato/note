@@ -28,6 +28,8 @@
     * [xxx]()
 * 性能优化
     * [xxx]()
+* Echarts
+    * [Echarts](docs/echart/echarts.md)
 * 数据库
     * [xxx]()
 * Linux

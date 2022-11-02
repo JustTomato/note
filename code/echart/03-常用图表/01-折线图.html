@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>折线</title>
+    <style>
+        #main{
+            margin: 20px;
+            width: 700px;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+<!--建立dom 容器-->
+<div id="main"></div>
+<!--引入echarts-->
+<script src="https://lib.baomitu.com/echarts/5.1.2/echarts.min.js"></script>
+<script>
+    const myChart = echarts.init(document.getElementById('main'));
+
+    const option = {
+        /* x轴
+         *  data 类目轴数据
+         *  boundaryGap 边界留白
+         *  axisLabel 标签
+         *      margin 标签偏移量
+        */
+        xAxis:{
+            data:['html','css','js'],
+            boundaryGap:0,
+            axisLabel:{
+                rotate:60,
+                margin: 20
+            }
+        },
+        /* y轴 */
+        yAxis:{
+            axisLabel:{
+                margin:20
+            }
+        },
+        /*series 系列集合
+        *   type 系列名称
+        *   name 系列名
+        *   data 系列数据 [10,20,30]
+        *   smooth 平滑
+        *   itemStyle 项目样式
+        *       color 颜色
+        *   areaStyle 区域样式
+        *       color 区域颜色
+        *       opacity 透明度
+        *   symbolSize 标记点大小
+        *   symbol 标记形状
+        *       内置形状：'circle','rect','roundRect','triangle','diamond','pin','arrow','none'
+        *       'image://url'  图片
+        *       'path://' svg
+        */
+        // series:[
+        //     {
+        //         id:1,
+        //         name:'学习人数',
+        //         type:'line',
+        //         data:[30,20,40,100],
+        //         smooth:true,
+        //     },
+        // ]
+        series:{
+            type:'line',
+            data:[30,20,40,100],
+            smooth:true,
+            itemStyle:{
+                color:'#00acec'
+            },
+            areaStyle:{
+                color:'#00acec',
+                opacity:0.3
+            },
+            symbolSize:40,
+            // symbol:'pin',
+            // symbol:'image://./images/bs.png'
+        }
+    };
+
+    setTimeout(()=>{
+        myChart.setOption({
+            series: [
+                {
+                    id:1,
+                    data:[30,20,0],
+                }
+            ]
+        })
+    },1000)
+
+    // 使用刚指定的配置项和数据显示图表。
+    myChart.setOption(option);
+</script>
+</body>
+</html>

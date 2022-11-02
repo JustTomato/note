@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>折线</title>
+    <style>
+        #main {
+            margin: 20px;
+            width: 700px;
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--建立dom 容器-->
+    <div id="main"></div>
+    <!--引入echarts-->
+    <script src="https://lib.baomitu.com/echarts/5.1.2/echarts.min.js"></script>
+    <script>
+        const myChart = echarts.init(document.getElementById('main'));
+
+        const option = {
+            xAxis: {
+                name: 'x轴坐标名称',
+                data: ['html', 'css', 'js'],
+                axisLabel: {
+                    margin: 20
+                }
+            },
+            /* y轴 */
+            yAxis: {
+                name: 'y轴坐标名称',
+                splitNumber: 5,
+                axisLabel: {
+                    margin: 20
+                }
+            },
+            legend: {
+                icon: 'circle',
+                left: 'right',
+                top: 32,
+                itemHeight: 7,
+                textStyle: {
+                    padding: [0, 0, 0, -9],
+                    color: '#999'
+                }
+            },
+            series: [{
+                    name: '第一个数据',
+                    type: 'line',
+                    data: [30, 20, 40, 100],
+                    lineStyle: {
+                        color: 'crimson'
+                    },
+
+                },
+                {
+                    name: '第二个数据',
+                    type: 'line',
+                    data: [301, 201, 411, 110],
+                    lineStyle: {
+                        color: 'crimson'
+                    },
+                }
+            ]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    </script>
+</body>
+
+</html>

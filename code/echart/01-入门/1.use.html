@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试Echart</title>
+    <style>
+        #main {
+            width: 1000px;
+            height: 800px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 建立dom容器 -->
+    <div id="main"></div>
+    <!-- 引入echarts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <script>
+        // 基于准备好的dom容器，初始化echarts实例
+        // echart init(dom)
+        const main = document.getElementById('main');
+        const chart = echarts.init(main);
+        // 指定图标的option 配置项和数据
+        //     xAxis x轴 {}
+        //         data 类目数据
+        //     yAxis y轴
+        //     series 系列列表
+        //         type 图表类型
+        //         data 数据，于xAxis.data相对应
+
+        const option = {
+            title: {
+                text: '主标题',
+                left: 'center',
+                subtext: '副标题',
+                textStyle: {
+                    color: 'blue',
+                    fontSize: 28,
+                },
+                subtextStyle: {
+                    color: '#333',
+                    fontSize: 20,
+                },
+                // show:false
+            },
+            //绘图区域，可以控制标题跟图表的间距
+            grid: {
+                top: 80
+            },
+            xAxis: {
+                name: 'x轴坐标名称',
+                data: ['html', 'css', 'js']
+            },
+            yAxis: {
+                name: 'y轴坐标名称',
+                // splitNumber:20
+                // interval:5,
+                minInterval: 20,
+                maxInterval: 50
+
+            }, //这里的yAxis可以给空对象
+            //y轴上的数据是通过series设置的
+            tooltip: {
+                // trigger:'item', //例如柱状图来说，根据柱状图来提示，而axis则是根据x坐标轴来提示
+                // trigger:'axis', //
+                trigger: 'none'
+            },
+            legend: {
+                // data:['图例1','图例2'],
+                left: 'left'
+            },
+            series: [{
+                    name: '数据1',
+                    type: 'bar',
+                    data: [100, 200, 300],
+                    markPoint: {
+                        data: [{
+                                type: 'max',
+                            }, {
+                                type: 'min'
+                            },
+                            {
+                                type: 'average'
+                            },
+                            {
+                                coord: [0, 140], //自定义标点，0代表x轴的第一个，40代表y轴上的具体值的位置
+                                value: '140次' //value 代表标点上显示的文字
+                            }
+                        ]
+                    }
+                },
+                {
+                    name: '数据2',
+                    type: 'line',
+                    data: [300, 200, 100],
+                    markLine: {
+                        data: [{
+                                type: 'average'
+                            },
+                            {
+                                type: 'min'
+                            },
+                            {
+                                type: 'max'
+                            },
+                            [{
+                                    coord: [0, 0]
+                                },
+                                {
+                                    coord: [2, 150],
+                                    value: '自定义的markLine'
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ],
+            toolbox: {
+                feature: {
+                    saveAsImage: {
+                        type: 'jpg' //默认是png格式
+                    },
+                    dataView: {},
+                    restore: {}, //搭配dataView使用，恢复dataView的改动
+                    dataZoom: {},
+                    magicType: {
+                        type: ['line', 'bar', 'stack']
+                    }
+                }
+            }
+        }
+        chart.setOption(option);
+    </script>
+</body>
+
+</html>
