@@ -4,8 +4,8 @@ const Router = require('./router')
 function Application() {
     this._router = new Router();
 }
-Application.prototype.get = function (path, callback) {
-    this._router.get(path, callback)
+Application.prototype.get = function (path, ...handlers) {
+    this._router.get(path, handlers)
 };
 Application.prototype.listen = function (...args) {
     // Array.prototype.slice.call(arguments);

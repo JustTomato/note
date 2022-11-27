@@ -1,30 +1,40 @@
 const url = require('url');
+const Layer = require('./layer');
+const Route = require('./route')
 function Router() {
-    this._router = [
-        
-    ];
+    this.stack = [];
 
 }
-Router.prototype.get = function (path, callback) {
-    this._router.push({
-        path,
-        method: 'get',
-        handler: callback
-    })
+//1.创建route 和layer并且layer要有一个route属性
+Router.prototype.route = function (path) {
+    let route = new Route();
+    let layer = new Layer(path, route.dispatch.bind(route));
+    layer.route = route;
+    this.stack.push(layer)
+
+    return route
+}
+Router.prototype.get = function (path, handlers) {
+    let route = this.route(path);
+    route.get(handlers)
 }
 
-Router.prototype.handle = function (req, res,done) {
+Router.prototype.handle = function (req, res, done) {
     let { pathname } = url.parse(req.url);
     let requestMethod = req.method.toLowerCase();
-    for (let i = 0; i < this._router.length; i++) {
-        let { path, method, handler } = this._router[i]
-        // if ((pathname == path || path === '*') && (method === requestMethod || method === 'all')) {
-        if (pathname == path && method === requestMethod) {
-            return handler(req, res)
+
+    //1.先遍历外层的数组 异步迭代用函数
+    let idx = 0
+    const next = () => {
+        if (this.stack.length == idx) return done();
+        let layer = this.stack[idx++];
+        if (layer.path === pathname) {
+            layer.handler(req, res, next)//当这个handle处理完成之后还要执行next往下走
+        } else {
+            next()
         }
     }
-    //这里是找不到用户自己定义的路由，则返回交给应用层处理
-    done()
+    next();
 }
 
 module.exports = Router;
